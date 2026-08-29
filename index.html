@@ -49,10 +49,10 @@
     background:repeating-linear-gradient(180deg,#0b0e14 0 3px,#2d3444 3px 6px);}
   /* short windows: give the vertical room to the playfield */
   .cab.compact{padding:9px;}
-  .cab.compact #glass{display:none;}
+  .cab.compact #glass{height:112px;object-fit:cover;object-position:50% 100%;}
   .cab.compact .marquee{padding:4px 0 6px;}
   .cab.compact .marquee b{font-size:28px;letter-spacing:9px;}
-  .cab.compact .marquee i{display:none;}
+  .cab.compact .marquee i{font-size:9px;letter-spacing:6px;}
   .cab.compact .bezel{margin-top:8px;padding:7px 7px 5px;}
   .cab.compact #hud{font-size:14px;gap:22px;}
   .cab.compact #hud b{font-size:19px;}
@@ -1271,7 +1271,7 @@ clearBtn.addEventListener('click',function(){
   },1400);
 });
 
-function loop(){ step(); draw(); if(gl.offsetParent) drawGlass(); requestAnimationFrame(loop); }
+function loop(){ step(); draw(); drawGlass(); requestAnimationFrame(loop); }
 msgEl.textContent=HINT;
 paintLetters();
 fitCab();
