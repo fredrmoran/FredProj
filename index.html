@@ -121,7 +121,7 @@ function noLetters(){ const a=[]; for(let i=0;i<NL;i++) a.push(false); return a;
 let lit=noLetters(), litPulse=[0,0,0,0,0,0,0,0];
 const LETTERS=(function(){
   const out=[], x0=148, x1=796;
-  for(let i=0;i<NL;i++) out.push({c:WORD[i], x:x0+(x1-x0)*i/(NL-1), y:500});
+  for(let i=0;i<NL;i++) out.push({c:WORD[i], x:x0+(x1-x0)*i/(NL-1), y:440});
   return out;
 })();
 
@@ -158,8 +158,11 @@ const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
 const trail=[];
 let charge=0, charging=false, launched=false;
 
-const flL={px:380,py:800,len:80,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
-const flR={px:564,py:800,len:80,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+const flL ={px:380,py:800,len:80,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
+const flR ={px:564,py:800,len:80,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+const flL2={px:141,py:500,len:58,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
+const flR2={px:803,py:500,len:58,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+const FLIPPERS=[flL,flR,flL2,flR2];
 
 let carT=0; const carSpeed=0.011;
 
@@ -341,13 +344,13 @@ addEventListener('keydown',function(e){
   }
   if(phase==='scores'){ if(e.key==='r'||e.key==='R') reset(); return; }
   if(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='ArrowDown') e.preventDefault();
-  if(e.key==='ArrowLeft'  && !flL.on){ flL.on=true; blip(90,0.05,'square',0.04); }
-  if(e.key==='ArrowRight' && !flR.on){ flR.on=true; blip(90,0.05,'square',0.04); }
+  if(e.key==='ArrowLeft'  && !flL.on){ flL.on=true; flL2.on=true; blip(90,0.05,'square',0.04); }
+  if(e.key==='ArrowRight' && !flR.on){ flR.on=true; flR2.on=true; blip(90,0.05,'square',0.04); }
   if(e.key==='ArrowDown' && !launched) charging=true;
 });
 addEventListener('keyup',function(e){
-  if(e.key==='ArrowLeft')  flL.on=false;
-  if(e.key==='ArrowRight') flR.on=false;
+  if(e.key==='ArrowLeft'){  flL.on=false; flL2.on=false; }
+  if(e.key==='ArrowRight'){ flR.on=false; flR2.on=false; }
   if(e.key==='ArrowDown' && charging) launch();
 });
 
@@ -372,14 +375,14 @@ function step(){
   if(multTimer>0){ multTimer--; if(multTimer===0){ mult=1; multEl.textContent=1; multEl.className=''; } }
 
   const FSPD=0.21;
-  for(const f of [flL,flR]){
+  for(const f of FLIPPERS){
     const diff=(f.on?f.up:f.rest)-f.a;
     f.w=Math.abs(diff)<FSPD?diff:(diff>0?FSPD:-FSPD);
   }
-  if(over){ for(const f of [flL,flR]) f.a+=f.w; return; }
+  if(over){ for(const f of FLIPPERS) f.a+=f.w; return; }
 
   if(scoop>0){
-    for(const f of [flL,flR]) f.a+=f.w;
+    for(const f of FLIPPERS) f.a+=f.w;
     scoop--;
     if(scoop===0){
       if(ejectRail){
@@ -403,7 +406,7 @@ function step(){
     return;
   }
   if(!launched){
-    for(const f of [flL,flR]) f.a+=f.w;
+    for(const f of FLIPPERS) f.a+=f.w;
     if(charging) charge=Math.min(1,charge+0.022);
     ball.x=LANE_X; ball.y=FLOOR-BR-23+charge*23; ball.vx=0; ball.vy=0;
     return;
@@ -425,7 +428,7 @@ function step(){
 
   const N=10, open=jawOpen();
   for(let s=0;s<N;s++){
-    for(const f of [flL,flR]) f.a+=f.w/N;
+    for(const f of FLIPPERS) f.a+=f.w/N;
     ball.vy+=G/N; ball.x+=ball.vx/N; ball.y+=ball.vy/N;
 
     const u=Math.pow((ball.x-EX)/RX_I,2)+Math.pow((ball.y-EY)/RY_I,2);
@@ -464,8 +467,7 @@ function step(){
       chainContact(HEADSEGS,ball,0.55);
       if(open<0.45) circContact(ball,MOUTH.x,MOUTH.y,27,0.62,0,0);
     }
-    flipperContact(ball,flL);
-    flipperContact(ball,flR);
+    for(const f of FLIPPERS) flipperContact(ball,f);
 
     const imp=resolve(ball);
     if(imp>5 && clickCool===0){
@@ -881,13 +883,13 @@ function draw(){
 
   drawDoor();
 
-  for(const f of [flL,flR]){
-    const tip=flipperTip(f);
-    ctx.strokeStyle='#ffd24a'; ctx.lineWidth=16; ctx.lineCap='round';
+  for(const f of FLIPPERS){
+    const tip=flipperTip(f), big=f.len>70;
+    ctx.strokeStyle='#ffd24a'; ctx.lineWidth=big?16:13; ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(f.px,f.py); ctx.lineTo(tip.x,tip.y); ctx.stroke();
-    ctx.strokeStyle='#fff0b8'; ctx.lineWidth=5;
+    ctx.strokeStyle='#fff0b8'; ctx.lineWidth=big?5:4;
     ctx.beginPath(); ctx.moveTo(f.px,f.py); ctx.lineTo(tip.x,tip.y); ctx.stroke();
-    ctx.fillStyle='#7a5a10'; ctx.beginPath(); ctx.arc(f.px,f.py,5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#7a5a10'; ctx.beginPath(); ctx.arc(f.px,f.py,big?5:4,0,Math.PI*2); ctx.fill();
   }
 
   for(const p of parts){
