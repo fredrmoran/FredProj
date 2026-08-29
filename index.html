@@ -173,10 +173,14 @@ const SEGS=[
 ];
 
 const BUMPERS=[{x:240,y:580,r:28,cool:0,hit:0},{x:704,y:580,r:28,cool:0,hit:0}];
-const EBS=[
-  {x:368,y:700,r:20,lit:false,hit:0,pulse:0},
-  {x:576,y:700,r:20,lit:false,hit:0,pulse:1.6}
-];
+const EBS=(function(){
+  const out=[];
+  for(const t of [Math.PI*0.75, Math.PI*0.25]){        // on the car's own track
+    out.push({x:EX+RX_C*Math.cos(t), y:EY-RY_C*Math.sin(t),
+              r:18, lit:false, hit:0, pulse:out.length*1.6});
+  }
+  return out;
+})();
 const pops=[], parts=[];
 
 /* ---------------- sound ---------------- */
@@ -621,13 +625,15 @@ function drawDoor(){
   ctx.fillText('ONE WAY',(EXIT_L+EXIT_R)/2,EY+22);
 }
 
-function drawCarRail(){
+function drawCarTrack(){
   ctx.strokeStyle='#2b3038'; ctx.lineWidth=26;
   ctx.beginPath(); ctx.ellipse(EX,EY,RX_C,RY_C,0,Math.PI,2*Math.PI); ctx.stroke();
   ctx.strokeStyle='#808c99'; ctx.lineWidth=2; ctx.setLineDash([7,10]);
   ctx.beginPath(); ctx.ellipse(EX,EY,RX_C,RY_C,0,Math.PI,2*Math.PI); ctx.stroke();
   ctx.setLineDash([]);
+}
 
+function drawCar(){
   const c=carPos();
   const tx=-RX_C*Math.sin(carT), ty=-RY_C*Math.cos(carT);
   const tl=Math.hypot(tx,ty)||1;
@@ -791,7 +797,7 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(LANE_X,EY); ctx.lineTo(LANE_X,FLOOR-6); ctx.stroke();
   ctx.setLineDash([]);
 
-  drawCarRail();
+  drawCarTrack();
   drawDino();
 
   for(const e of EBS){
@@ -806,9 +812,11 @@ function draw(){
     ctx.font='bold 14px Verdana'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('EB',e.x,e.y+1); ctx.textBaseline='alphabetic';
     ctx.fillStyle=on?'#7ef2a0':'#3f6a49'; ctx.font='bold 10px Verdana';
-    ctx.fillText('EXTRA BALL',e.x,e.y+36);
+    ctx.fillText('EXTRA BALL',e.x,e.y+34);
     ctx.restore();
   }
+
+  drawCar();
 
   for(const bp of BUMPERS){
     const h=bp.hit/15;
