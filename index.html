@@ -152,7 +152,7 @@ const RAIL_OUT=chain(EX,EY,RX_O,RY_O,Math.PI,2*Math.PI,130);
 const HEADSEGS=chain(HEAD.cx,HEAD.cy,HEAD.rx,HEAD.ry,0,2*Math.PI,64,72,108);
 
 let scoop=0, flash=0, shake=0, jawT=0, carCool=0, clickCool=0, laneStuck=0;
-let railPhase=0, railGlow=0, doorOpen=0, stuckT=0;
+let railPhase=0, railGlow=0, doorOpen=0, stuckT=0, ballGain=0;
 
 const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
 const trail=[];
@@ -315,7 +315,7 @@ function reset(){
   scoreEl.textContent=0; ballsEl.textContent=3;
   pops.length=0; parts.length=0;
   for(const e of EBS){ e.lit=false; e.hit=0; }
-  phase='play'; justIdx=-1; initials='';
+  phase='play'; justIdx=-1; initials=''; ballGain=0;
   paintLetters(); newBall(); msgEl.textContent=HINT;
 }
 const HINT='HOLD DOWN-ARROW TO CHARGE, RELEASE TO SHOOT  -  LEFT/RIGHT = FLIPPERS';
@@ -347,6 +347,7 @@ function step(){
   if(carCool>0) carCool--;
   if(clickCool>0) clickCool--;
   if(railGlow>0) railGlow--;
+  if(ballGain>0) ballGain--;
   if(doorOpen>0) doorOpen-=0.06;
   for(let i=0;i<NL;i++) if(litPulse[i]>0) litPulse[i]--;
   for(const bp of BUMPERS){ if(bp.cool>0) bp.cool--; if(bp.hit>0) bp.hit--; }
@@ -493,7 +494,7 @@ function step(){
   for(const e of EBS){
     if(e.lit && Math.hypot(ball.x-e.x,ball.y-e.y)<e.r+ball.r){
       e.lit=false; e.hit=40;
-      balls++; ballsEl.textContent=balls;
+      balls++; ballsEl.textContent=balls; ballGain=90;
       pop(e.x,e.y-38,'EXTRA BALL!','#7ef2a0');
       burst(e.x,e.y,34,'#7ef2a0',4.5); kick(14); flash=24;
       blip(400,0.45,'square',0.09,1700);
@@ -565,6 +566,42 @@ function drawRail(){
   ctx.fillStyle=hot?'#d8f6ff':'#6fd0ec';
   ctx.font='bold 14px Verdana'; ctx.textAlign='center';
   ctx.fillText('J U R A S S I C   R A I L',EX,EY-RY_M+5);
+}
+
+function drawApron(){
+  const bx=92, by=706;
+  ctx.save();
+  ctx.fillStyle='rgba(8,20,12,0.55)';
+  ctx.beginPath(); ctx.roundRect(bx-16,by-46,196,74,10); ctx.fill();
+  ctx.strokeStyle='#33603c'; ctx.lineWidth=2; ctx.stroke();
+
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle= ballGain>0 ? '#7ef2a0' : '#6ba077';
+  ctx.font='bold 12px Verdana';
+  ctx.fillText('BALLS',bx,by-24);
+
+  const n=Math.max(0,balls), show=Math.min(n,5);
+  for(let i=0;i<show;i++){
+    const x=bx+12+i*32, y=by+4;
+    const fresh = ballGain>0 && i===show-1;
+    if(fresh){ ctx.shadowColor='#7ef2a0'; ctx.shadowBlur=12+(ballGain/90)*26; }
+    const g=ctx.createRadialGradient(x-4,y-4,1,x,y,12);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(1, fresh?'#7ef2a0':'#8e9ba7');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle= fresh?'#dfffe9':'#5d6c78'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  if(n>5){
+    ctx.fillStyle='#ffd24a'; ctx.font='bold 16px Verdana';
+    ctx.fillText('+'+(n-5), bx+12+5*32-8, by+10);
+  }
+  if(ballGain>0){
+    ctx.fillStyle='rgba(126,242,160,'+Math.min(1,ballGain/90)+')';
+    ctx.font='bold 13px Verdana';
+    ctx.fillText('+1 BALL',bx+84,by-24);
+  }
+  ctx.restore();
 }
 
 function drawDoor(){
@@ -809,6 +846,7 @@ function draw(){
   ctx.strokeStyle='#6fae72'; ctx.lineWidth=5; ctx.lineCap='round';
   for(const g of SEGS){ ctx.beginPath(); ctx.moveTo(g[0],g[1]); ctx.lineTo(g[2],g[3]); ctx.stroke(); }
 
+  drawApron();
   drawDoor();
 
   for(const f of [flL,flR]){
