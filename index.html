@@ -457,7 +457,7 @@ function step(){
 
   const hx=(ball.x-HEAD.cx)/HEAD.rx, hy=(ball.y-HEAD.cy)/HEAD.ry;
   if(hx*hx+hy*hy<1){
-    award(5000,MOUTH.x,MOUTH.y-46,'CHOMP');
+    award(25000,MOUTH.x,MOUTH.y-46,'CHOMP');
     scoop=70; flash=18; kick(13);
     burst(MOUTH.x,MOUTH.y,26,'#ff5d3d',4);
     blip(320,0.3,'sawtooth',0.09,90);
@@ -467,12 +467,12 @@ function step(){
     const L=LETTERS[i];
     if(!lit[i] && Math.hypot(ball.x-L.x,ball.y-L.y)<21){
       lit[i]=true; litPulse[i]=22; paintLetters();
-      award(1000,L.x,L.y-28);
+      award(400,L.x,L.y-28);
       burst(L.x,L.y,10,'#ffd24a',2.4); kick(3);
       blip(400+i*62,0.12,'square',0.06);
       let all=true; for(let k=0;k<NL;k++) if(!lit[k]) all=false;
       if(all){
-        award(20000,EX,560,'DINOSAUR!');
+        award(6000,EX,560,'DINOSAUR!');
         flash=30; kick(16);
         burst(EX,560,52,'#ffd24a',5.5);
         blip(300,0.6,'square',0.09,1600);
@@ -725,7 +725,7 @@ function drawDino(){
   }
 
   ctx.font='bold 12px Verdana'; ctx.textAlign='center';
-  if(open>=0.45){ ctx.fillStyle='#ffd24a'; ctx.fillText('MOUTH OPEN - 5000',cx,B+56); }
+  if(open>=0.45){ ctx.fillStyle='#ffd24a'; ctx.fillText('MOUTH OPEN - 25000',cx,B+56); }
   else          { ctx.fillStyle='#5f8a5f'; ctx.fillText('JAW SHUT',cx,B+56); }
   ctx.restore();
 }
