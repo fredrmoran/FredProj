@@ -277,7 +277,7 @@ function award(n,x,y,label){
 }
 function paintLetters(){ for(let i=0;i<NL;i++) dinoEls[i].className=lit[i]?'on':''; }
 function newBall(){
-  ball.x=LANE_X; ball.y=890; ball.vx=0; ball.vy=0; ball.inLane=true;
+  ball.x=LANE_X; ball.y=FLOOR-BR-23; ball.vx=0; ball.vy=0; ball.inLane=true;
   charge=0; charging=false; launched=false; scoop=0; laneStuck=0; stuckT=0; trail.length=0;
   mult=1; multEl.textContent=1; multEl.className='';
 }
@@ -379,7 +379,7 @@ function step(){
   if(!launched){
     for(const f of [flL,flR]) f.a+=f.w;
     if(charging) charge=Math.min(1,charge+0.022);
-    ball.x=LANE_X; ball.y=890+charge*24; ball.vx=0; ball.vy=0;
+    ball.x=LANE_X; ball.y=FLOOR-BR-23+charge*23; ball.vx=0; ball.vy=0;
     return;
   }
 
@@ -447,6 +447,11 @@ function step(){
       blip(180+Math.min(imp,20)*14,0.045,'triangle',Math.min(0.05,imp/500));
       if(imp>11){ burst(ball.x,ball.y,4,'#cfe8bf',1.8); kick(imp*0.16); }
     }
+  }
+
+  if(ball.x>LANE_L && ball.y>FLOOR-ball.r){
+    ball.y=FLOOR-ball.r;
+    if(ball.vy>0) ball.vy=0;
   }
 
   if(ball.y>EY-6 && ball.y<EY+16 && ball.x<EXIT_R+10 && ball.vy>0) doorOpen=1;
