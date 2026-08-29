@@ -151,7 +151,7 @@ const RAIL_IN =chain(EX,EY,RX_I,RY_I,Math.PI,2*Math.PI,130);
 const RAIL_OUT=chain(EX,EY,RX_O,RY_O,Math.PI,2*Math.PI,130);
 const HEADSEGS=chain(HEAD.cx,HEAD.cy,HEAD.rx,HEAD.ry,0,2*Math.PI,64,72,108);
 
-let scoop=0, flash=0, shake=0, jawT=0, carCool=0, clickCool=0, laneStuck=0;
+let scoop=0, ejectRail=false, flash=0, shake=0, jawT=0, carCool=0, clickCool=0, laneStuck=0;
 let railPhase=0, railGlow=0, doorOpen=0, stuckT=0;
 
 const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
@@ -282,7 +282,7 @@ function award(n,x,y,label){
 function paintLetters(){ for(let i=0;i<NL;i++) dinoEls[i].className=lit[i]?'on':''; }
 function newBall(){
   ball.x=LANE_X; ball.y=FLOOR-BR-23; ball.vx=0; ball.vy=0; ball.inLane=true;
-  charge=0; charging=false; launched=false; scoop=0; laneStuck=0; stuckT=0; trail.length=0;
+  charge=0; charging=false; launched=false; scoop=0; ejectRail=false; laneStuck=0; stuckT=0; trail.length=0;
   mult=1; multEl.textContent=1; multEl.className='';
 }
 function gameOver(){
@@ -374,9 +374,23 @@ function step(){
     for(const f of [flL,flR]) f.a+=f.w;
     scoop--;
     if(scoop===0){
-      ball.x=MOUTH.x; ball.y=HEAD.cy+HEAD.ry+18;
-      ball.vx=(Math.random()-0.5)*3; ball.vy=4.5;
-      blip(700,0.14,'square',0.06,300);
+      if(ejectRail){
+        // drop it into the rail at the right-hand entry, running up and over the top
+        const t=0.14;
+        ball.x=EX+RX_M*Math.cos(t); ball.y=EY-RY_M*Math.sin(t);
+        let vx=-RX_M*Math.sin(t), vy=-RY_M*Math.cos(t);
+        const l=Math.hypot(vx,vy)||1;
+        ball.vx=vx/l*21; ball.vy=vy/l*21;
+        ball.inLane=true; ejectRail=false;
+        trail.length=0; railGlow=40; flash=14; kick(8);
+        pop(ball.x-70,ball.y-26,'RAIL RIDE!','#8fe8ff');
+        burst(ball.x,ball.y,20,'#8fe8ff',3.5);
+        blip(220,0.4,'square',0.08,1500);
+      }else{
+        ball.x=MOUTH.x; ball.y=HEAD.cy+HEAD.ry+18;
+        ball.vx=(Math.random()-0.5)*3; ball.vy=4.5;
+        blip(700,0.14,'square',0.06,300);
+      }
     }
     return;
   }
@@ -501,6 +515,8 @@ function step(){
       pop(e.x,e.y-38,'EXTRA BALL!','#7ef2a0');
       burst(e.x,e.y,34,'#7ef2a0',4.5); kick(14); flash=24;
       blip(400,0.45,'square',0.09,1700);
+      scoop=42; ejectRail=true;          // ride the rail
+      break;
     }
   }
 
