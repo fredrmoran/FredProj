@@ -38,6 +38,11 @@
   .keys b{display:inline-block;min-width:20px;text-align:center;background:#0b0e14;
     border:2px solid #465165;border-radius:5px;padding:1px 6px;color:#ffd24a;margin-right:6px;}
   .coin{display:flex;gap:9px;align-items:center;}
+  #clear{font-family:inherit;font-size:10px;letter-spacing:1px;color:#e2a0a0;cursor:pointer;
+    background:#160e12;border:2px solid #6b3a3a;border-radius:6px;padding:7px 11px;}
+  #clear:hover{background:#2a1418;border-color:#a35050;color:#ffd3d3;}
+  #clear:active{transform:translateY(1px);}
+  #clear.done{color:#9ef2b0;border-color:#3f7a4a;background:#0f2416;}
   .slot{width:25px;height:40px;background:#0b0e14;border:2px solid #465165;border-radius:4px;position:relative;}
   .slot::after{content:'';position:absolute;left:50%;top:7px;margin-left:-2px;width:4px;height:23px;background:#000;border-radius:2px;}
   .grille{width:90px;height:40px;border:2px solid #465165;border-radius:5px;
@@ -68,6 +73,7 @@
       <span><b>&#9664;</b><b>&#9654;</b> FLIPPERS</span>
       <span><b>&#9660;</b> HOLD TO CHARGE / RELEASE TO SHOOT</span>
     </div>
+    <button id="clear" type="button">CLEAR HIGH SCORES</button>
     <div class="coin"><div class="slot"></div><div class="slot"></div></div>
   </div>
 
@@ -1090,6 +1096,33 @@ function fitCab(){
   f.style.transform='scale('+sc+')';
 }
 addEventListener('resize',fitCab);
+
+const clearBtn=document.getElementById('clear');
+let clearArmed=0;
+clearBtn.addEventListener('click',function(){
+  clearBtn.blur();                       // keep the arrow keys on the table
+  if(!hi.length){
+    clearBtn.textContent='NO SCORES YET';
+    setTimeout(function(){ clearBtn.textContent='CLEAR HIGH SCORES'; },1200);
+    return;
+  }
+  if(!clearArmed){
+    clearArmed=1;
+    clearBtn.textContent='CLICK AGAIN TO ERASE';
+    setTimeout(function(){
+      if(clearArmed){ clearArmed=0; clearBtn.textContent='CLEAR HIGH SCORES'; }
+    },3000);
+    return;
+  }
+  clearArmed=0; hi=[]; justIdx=-1; saveHi();
+  clearBtn.classList.add('done');
+  clearBtn.textContent='SCORES CLEARED';
+  blip(300,0.2,'square',0.06,900);
+  setTimeout(function(){
+    clearBtn.classList.remove('done');
+    clearBtn.textContent='CLEAR HIGH SCORES';
+  },1400);
+});
 
 function loop(){ step(); draw(); drawGlass(); requestAnimationFrame(loop); }
 msgEl.textContent=HINT;
