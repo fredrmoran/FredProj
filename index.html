@@ -27,7 +27,7 @@
   #hud{display:flex;gap:32px;align-items:center;justify-content:center;font-size:16px;letter-spacing:2px;}
   #hud b{color:#ffd24a;font-size:22px;}
   #mult.hot{color:#ff8b3d;text-shadow:0 0 12px #ff8b3d;}
-  #dino span{font-size:23px;font-weight:bold;color:#2f4f36;margin:0 3px;}
+  #dino span{font-size:19px;font-weight:bold;color:#2f4f36;margin:0 2px;}
   #dino span.on{color:#ffd24a;text-shadow:0 0 10px #ffd24a;}
   canvas#c{display:block;margin:8px auto 0;border:3px solid #3c5c40;border-radius:14px;background:#14301c;}
   #msg{height:18px;margin-top:6px;text-align:center;font-size:12px;color:#8fbf7a;letter-spacing:1px;}
@@ -60,7 +60,7 @@
     <div id="hud">
       <span>SCORE <b id="score">0</b></span>
       <span>X<b id="mult">1</b></span>
-      <span id="dino"><span>D</span><span>I</span><span>N</span><span>O</span></span>
+      <span id="dino"><span>D</span><span>I</span><span>N</span><span>O</span><span>S</span><span>A</span><span>U</span><span>R</span></span>
       <span>BALLS <b id="balls">3</b></span>
     </div>
     <canvas id="c" width="1000" height="920"></canvas>
@@ -116,8 +116,14 @@ function loadHi(){ try{ const r=JSON.parse(localStorage.getItem('dinoPinballHi')
 function saveHi(){ try{ localStorage.setItem('dinoPinballHi',JSON.stringify(hi)); }catch(e){} }
 let hi=loadHi();
 
-let lit=[false,false,false,false], litPulse=[0,0,0,0];
-const LETTERS=[{c:'D',x:172,y:500},{c:'I',x:362,y:500},{c:'N',x:582,y:500},{c:'O',x:772,y:500}];
+const WORD='DINOSAUR', NL=WORD.length;
+function noLetters(){ const a=[]; for(let i=0;i<NL;i++) a.push(false); return a; }
+let lit=noLetters(), litPulse=[0,0,0,0,0,0,0,0];
+const LETTERS=(function(){
+  const out=[], x0=148, x1=796;
+  for(let i=0;i<NL;i++) out.push({c:WORD[i], x:x0+(x1-x0)*i/(NL-1), y:500});
+  return out;
+})();
 
 const HEAD={cx:500,cy:280,rx:95,ry:100};
 const MOUTH={x:500,y:344,r:28}, MW=34, MH=26;
@@ -146,7 +152,7 @@ const RAIL_OUT=chain(EX,EY,RX_O,RY_O,Math.PI,2*Math.PI,130);
 const HEADSEGS=chain(HEAD.cx,HEAD.cy,HEAD.rx,HEAD.ry,0,2*Math.PI,64,72,108);
 
 let scoop=0, flash=0, shake=0, jawT=0, carCool=0, clickCool=0, laneStuck=0;
-let railPhase=0, railGlow=0, doorOpen=0;
+let railPhase=0, railGlow=0, doorOpen=0, stuckT=0;
 
 const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
 const trail=[];
@@ -166,8 +172,11 @@ const SEGS=[
   [LANE_L,FLOOR, LANE_R,FLOOR]
 ];
 
-const BUMPERS=[{x:200,y:580,r:28,cool:0,hit:0},{x:744,y:580,r:28,cool:0,hit:0}];
-const EB={x:472,y:700,r:20,lit:false,hit:0,pulse:0};
+const BUMPERS=[{x:240,y:580,r:28,cool:0,hit:0},{x:704,y:580,r:28,cool:0,hit:0}];
+const EBS=[
+  {x:368,y:700,r:20,lit:false,hit:0,pulse:0},
+  {x:576,y:700,r:20,lit:false,hit:0,pulse:1.6}
+];
 const pops=[], parts=[];
 
 /* ---------------- sound ---------------- */
@@ -266,10 +275,10 @@ function award(n,x,y,label){
   mult=Math.min(9,mult+1); multTimer=150;
   multEl.textContent=mult; multEl.className=mult>3?'hot':'';
 }
-function paintLetters(){ for(let i=0;i<4;i++) dinoEls[i].className=lit[i]?'on':''; }
+function paintLetters(){ for(let i=0;i<NL;i++) dinoEls[i].className=lit[i]?'on':''; }
 function newBall(){
   ball.x=LANE_X; ball.y=890; ball.vx=0; ball.vy=0; ball.inLane=true;
-  charge=0; charging=false; launched=false; scoop=0; laneStuck=0; trail.length=0;
+  charge=0; charging=false; launched=false; scoop=0; laneStuck=0; stuckT=0; trail.length=0;
   mult=1; multEl.textContent=1; multEl.className='';
 }
 function gameOver(){
@@ -302,9 +311,10 @@ function launch(){
   blip(150,0.18,'square',0.07,520); kick(3);
 }
 function reset(){
-  score=0; balls=3; over=false; lit=[false,false,false,false];
+  score=0; balls=3; over=false; lit=noLetters();
   scoreEl.textContent=0; ballsEl.textContent=3;
-  pops.length=0; parts.length=0; EB.lit=false; EB.hit=0;
+  pops.length=0; parts.length=0;
+  for(const e of EBS){ e.lit=false; e.hit=0; }
   phase='play'; justIdx=-1; initials='';
   paintLetters(); newBall(); msgEl.textContent=HINT;
 }
@@ -338,10 +348,9 @@ function step(){
   if(clickCool>0) clickCool--;
   if(railGlow>0) railGlow--;
   if(doorOpen>0) doorOpen-=0.06;
-  for(let i=0;i<4;i++) if(litPulse[i]>0) litPulse[i]--;
+  for(let i=0;i<NL;i++) if(litPulse[i]>0) litPulse[i]--;
   for(const bp of BUMPERS){ if(bp.cool>0) bp.cool--; if(bp.hit>0) bp.hit--; }
-  if(EB.hit>0) EB.hit--;
-  EB.pulse+=0.09;
+  for(const e of EBS){ if(e.hit>0) e.hit--; e.pulse+=0.09; }
 
   for(let i=pops.length-1;i>=0;i--){ const p=pops[i]; p.y-=0.75; p.life--; if(p.life<=0) pops.splice(i,1); }
   for(let i=parts.length-1;i>=0;i--){
@@ -454,32 +463,45 @@ function step(){
     blip(320,0.3,'sawtooth',0.09,90);
   }
 
-  for(let i=0;i<4;i++){
+  for(let i=0;i<NL;i++){
     const L=LETTERS[i];
-    if(!lit[i] && Math.hypot(ball.x-L.x,ball.y-L.y)<22){
+    if(!lit[i] && Math.hypot(ball.x-L.x,ball.y-L.y)<21){
       lit[i]=true; litPulse[i]=22; paintLetters();
-      award(1000,L.x,L.y-26);
+      award(1000,L.x,L.y-28);
       burst(L.x,L.y,10,'#ffd24a',2.4); kick(3);
-      blip(440+i*110,0.12,'square',0.06);
-      if(lit[0]&&lit[1]&&lit[2]&&lit[3]){
-        award(10000,EX,560,'D-I-N-O');
-        flash=26; kick(16);
-        burst(EX,560,40,'#ffd24a',5);
-        blip(300,0.5,'square',0.09,1400);
-        lit=[false,false,false,false];
-        if(!EB.lit){ EB.lit=true; pop(EB.x,EB.y-32,'EXTRA BALL LIT!','#7ef2a0'); }
+      blip(400+i*62,0.12,'square',0.06);
+      let all=true; for(let k=0;k<NL;k++) if(!lit[k]) all=false;
+      if(all){
+        award(20000,EX,560,'DINOSAUR!');
+        flash=30; kick(16);
+        burst(EX,560,52,'#ffd24a',5.5);
+        blip(300,0.6,'square',0.09,1600);
+        lit=noLetters();
+        let anyNew=false;
+        for(const e of EBS) if(!e.lit){ e.lit=true; anyNew=true; }
+        if(anyNew) pop(EX,606,'EXTRA BALLS LIT!','#7ef2a0');
         setTimeout(paintLetters,420);
       }
     }
   }
 
-  if(EB.lit && Math.hypot(ball.x-EB.x,ball.y-EB.y)<EB.r+ball.r){
-    EB.lit=false; EB.hit=40;
-    balls++; ballsEl.textContent=balls;
-    pop(EB.x,EB.y-36,'EXTRA BALL!','#7ef2a0');
-    burst(EB.x,EB.y,34,'#7ef2a0',4.5); kick(14); flash=24;
-    blip(400,0.45,'square',0.09,1700);
+  for(const e of EBS){
+    if(e.lit && Math.hypot(ball.x-e.x,ball.y-e.y)<e.r+ball.r){
+      e.lit=false; e.hit=40;
+      balls++; ballsEl.textContent=balls;
+      pop(e.x,e.y-38,'EXTRA BALL!','#7ef2a0');
+      burst(e.x,e.y,34,'#7ef2a0',4.5); kick(14); flash=24;
+      blip(400,0.45,'square',0.09,1700);
+    }
   }
+
+  if(Math.hypot(ball.vx,ball.vy)<1.1 && ball.y<760 && ball.x<LANE_L-4){
+    if(++stuckT>100){
+      stuckT=0; ball.vx=(Math.random()-0.5)*7; ball.vy=4.5;
+      pop(ball.x,ball.y-24,'NUDGE','#bcd8e8'); kick(3);
+      blip(200,0.1,'triangle',0.05);
+    }
+  } else stuckT=0;
 
   if(ball.x>LANE_L+4 && ball.y>770 && Math.hypot(ball.vx,ball.vy)<1.4){
     if(++laneStuck>36){
@@ -730,21 +752,21 @@ function draw(){
   drawCarRail();
   drawDino();
 
-  (function(){
-    const on=EB.lit, pl=0.5+0.5*Math.sin(EB.pulse), h=EB.hit/40;
+  for(const e of EBS){
+    const on=e.lit, pl=0.5+0.5*Math.sin(e.pulse), h=e.hit/40;
     ctx.save();
     if(on||h>0){ ctx.shadowColor='#7ef2a0'; ctx.shadowBlur=12+pl*20+h*30; }
-    ctx.beginPath(); ctx.arc(EB.x,EB.y,EB.r,0,Math.PI*2);
+    ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
     ctx.fillStyle=on?'rgba(126,242,160,'+(0.55+pl*0.4)+')':'#20402a';
     ctx.fill(); ctx.shadowBlur=0;
     ctx.strokeStyle=on?'#dfffe9':'#3f7a4a'; ctx.lineWidth=2; ctx.stroke();
     ctx.fillStyle=on?'#0d2a15':'#6ba077';
     ctx.font='bold 14px Verdana'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('EB',EB.x,EB.y+1); ctx.textBaseline='alphabetic';
+    ctx.fillText('EB',e.x,e.y+1); ctx.textBaseline='alphabetic';
     ctx.fillStyle=on?'#7ef2a0':'#3f6a49'; ctx.font='bold 10px Verdana';
-    ctx.fillText('EXTRA BALL',EB.x,EB.y+34);
+    ctx.fillText('EXTRA BALL',e.x,e.y+36);
     ctx.restore();
-  })();
+  }
 
   for(const bp of BUMPERS){
     const h=bp.hit/15;
@@ -766,15 +788,15 @@ function draw(){
     ctx.restore();
   }
 
-  for(let i=0;i<4;i++){
-    const L=LETTERS[i], p=litPulse[i]/22, rr=20+p*8;
+  for(let i=0;i<NL;i++){
+    const L=LETTERS[i], p=litPulse[i]/22, rr=19+p*8;
     if(lit[i]){ ctx.shadowColor='#ffd24a'; ctx.shadowBlur=14+p*20; }
     ctx.beginPath(); ctx.arc(L.x,L.y,rr,0,Math.PI*2);
     ctx.fillStyle=lit[i]?'#ffd24a':'#26512f'; ctx.fill();
     ctx.shadowBlur=0;
     ctx.strokeStyle=lit[i]?'#fff3c4':'#3f7a4a'; ctx.lineWidth=2; ctx.stroke();
     ctx.fillStyle=lit[i]?'#3a2a00':'#7fb98c';
-    ctx.font='bold 22px Verdana'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='bold 20px Verdana'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(L.c,L.x,L.y+1);
   }
   ctx.textBaseline='alphabetic';
@@ -826,7 +848,11 @@ function draw(){
     ctx.strokeStyle='#c9a227'; ctx.lineWidth=12; ctx.lineCap='butt';
     ctx.beginPath(); ctx.moveTo(LANE_X,ball.y+10); ctx.lineTo(LANE_X,H); ctx.stroke();
     ctx.fillStyle='#0d1b12'; ctx.fillRect(974,740,14,140);
-    ctx.fillStyle='#ffd24a'; ctx.fillRect(974,880-charge*140,14,charge*140);
+    const cg=ctx.createLinearGradient(0,880,0,740);
+    cg.addColorStop(0,'#ffe14a'); cg.addColorStop(0.28,'#ffc22e');
+    cg.addColorStop(0.55,'#ff8b1e'); cg.addColorStop(0.8,'#ff5a1c'); cg.addColorStop(1,'#ff2a1e');
+    ctx.fillStyle=cg; ctx.fillRect(974,880-charge*140,14,charge*140);
+    for(let i=1;i<7;i++){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(974,740+i*20,14,1.5); }
     ctx.strokeStyle='#6fae72'; ctx.lineWidth=1.5; ctx.strokeRect(974,740,14,140);
   }
 
