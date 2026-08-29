@@ -47,6 +47,19 @@
   .slot::after{content:'';position:absolute;left:50%;top:7px;margin-left:-2px;width:4px;height:23px;background:#000;border-radius:2px;}
   .grille{width:90px;height:40px;border:2px solid #465165;border-radius:5px;
     background:repeating-linear-gradient(180deg,#0b0e14 0 3px,#2d3444 3px 6px);}
+  /* short windows: give the vertical room to the playfield */
+  .cab.compact{padding:9px;}
+  .cab.compact #glass{display:none;}
+  .cab.compact .marquee{padding:4px 0 6px;}
+  .cab.compact .marquee b{font-size:28px;letter-spacing:9px;}
+  .cab.compact .marquee i{display:none;}
+  .cab.compact .bezel{margin-top:8px;padding:7px 7px 5px;}
+  .cab.compact #hud{font-size:14px;gap:22px;}
+  .cab.compact #hud b{font-size:19px;}
+  .cab.compact #msg{height:14px;margin-top:3px;font-size:11px;}
+  .cab.compact .panel{margin-top:8px;padding:5px 12px;}
+  .cab.compact .grille,.cab.compact .slot{height:26px;}
+  .cab.compact #clear{padding:5px 9px;}
 </style>
 </head>
 <body>
@@ -63,7 +76,7 @@
       <span id="dino"><span>D</span><span>I</span><span>N</span><span>O</span><span>S</span><span>A</span><span>U</span><span>R</span></span>
       <span>BALLS <b id="balls">3</b></span>
     </div>
-    <canvas id="c" width="1000" height="920"></canvas>
+    <canvas id="c" width="1000" height="1000"></canvas>
     <div id="msg"></div>
   </div>
 
@@ -93,7 +106,7 @@ if(!ctx.roundRect){
   };
 }
 
-const W=1000, H=920;
+const W=1000, H=1000;
 // the rail is an ELLIPSE, so the table can be wide without the dome eating all the height
 const EX=500, EY=330;
 const RX_O=470, RY_O=280, RX_I=414, RY_I=224;
@@ -101,7 +114,7 @@ const RX_M=(RX_O+RX_I)/2, RY_M=(RY_O+RY_I)/2;
 const RX_C=360, RY_C=170, CARR=14;          // the car's own track
 const BR=11, G=0.23;
 
-const LANE_L=914, LANE_R=970, LANE_X=942, FLOOR=900;
+const LANE_L=914, LANE_R=970, LANE_X=942, FLOOR=980;
 const EXIT_L=30, EXIT_R=86;
 
 const scoreEl=document.getElementById('score'),
@@ -121,7 +134,7 @@ function noLetters(){ const a=[]; for(let i=0;i<NL;i++) a.push(false); return a;
 let lit=noLetters(), litPulse=[0,0,0,0,0,0,0,0];
 const LETTERS=(function(){
   const out=[], x0=148, x1=796;
-  for(let i=0;i<NL;i++) out.push({c:WORD[i], x:x0+(x1-x0)*i/(NL-1), y:440});
+  for(let i=0;i<NL;i++) out.push({c:WORD[i], x:x0+(x1-x0)*i/(NL-1), y:450});
   return out;
 })();
 
@@ -158,32 +171,32 @@ const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
 const trail=[];
 let charge=0, charging=false, launched=false;
 
-const flL ={px:380,py:800,len:80,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
-const flR ={px:564,py:800,len:80,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
-const flL2={px:141,py:500,len:58,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
-const flR2={px:803,py:500,len:58,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+const flL ={px:380,py:880,len:80,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
+const flR ={px:564,py:880,len:80,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+const flL2={px:160,py:560,len:58,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
+const flR2={px:784,py:560,len:58,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
 const FLIPPERS=[flL,flR,flL2,flR2];
 
 let carT=0; const carSpeed=0.011;
 
 const SEGS=[
-  [EXIT_L,EY,   EXIT_L,470],
-  [EXIT_L,470,  380,800],
+  [EXIT_L,EY,   EXIT_L,500],
+  [EXIT_L,500,  380,880],
   [LANE_L,EY,   LANE_L,FLOOR],
-  [LANE_L,470,  564,800],
+  [LANE_L,500,  564,880],
   [LANE_R,EY,   LANE_R,FLOOR],
   [LANE_L,FLOOR, LANE_R,FLOOR],
-  [62,437,  412,767],          // left habitrail inner wall
-  [882,437, 532,767]           // right habitrail inner wall
+  [64,469,  414,849],          // left habitrail inner wall
+  [880,469, 530,849]           // right habitrail inner wall
 ];
 
 // mouth at the top, delivery just above the flipper
 const HR=[
-  {mx:46,  my:437, ex:412, ey:767, cool:0, glow:0},
-  {mx:898, my:437, ex:532, ey:767, cool:0, glow:0}
+  {mx:48,  my:469, ex:414, ey:849, cool:0, glow:0},
+  {mx:896, my:469, ex:530, ey:849, cool:0, glow:0}
 ];
 
-const BUMPERS=[{x:240,y:580,r:28,cool:0,hit:0},{x:704,y:580,r:28,cool:0,hit:0}];
+const BUMPERS=[{x:280,y:670,r:28,cool:0,hit:0},{x:664,y:670,r:28,cool:0,hit:0}];
 const EBS=(function(){
   const out=[];
   for(const t of [Math.PI*0.75, Math.PI*0.25]){        // on the car's own track
@@ -516,9 +529,9 @@ function step(){
       blip(400+i*62,0.12,'square',0.06);
       let all=true; for(let k=0;k<NL;k++) if(!lit[k]) all=false;
       if(all){
-        award(6000,EX,560,'DINOSAUR!');
+        award(6000,EX,540,'DINOSAUR!');
         flash=30; kick(16);
-        burst(EX,560,52,'#ffd24a',5.5);
+        burst(EX,540,52,'#ffd24a',5.5);
         blip(300,0.6,'square',0.09,1600);
         lit=noLetters();
         let anyNew=false;
@@ -541,7 +554,7 @@ function step(){
     }
   }
 
-  if(Math.hypot(ball.vx,ball.vy)<1.1 && ball.y<760 && ball.x<LANE_L-4){
+  if(Math.hypot(ball.vx,ball.vy)<1.1 && ball.y<840 && ball.x<LANE_L-4){
     if(++stuckT>100){
       stuckT=0; ball.vx=(Math.random()-0.5)*7; ball.vy=4.5;
       pop(ball.x,ball.y-24,'NUDGE','#bcd8e8'); kick(3);
@@ -549,15 +562,15 @@ function step(){
     }
   } else stuckT=0;
 
-  if(ball.x>LANE_L+4 && ball.y>770 && Math.hypot(ball.vx,ball.vy)<1.4){
+  if(ball.x>LANE_L+4 && ball.y>850 && Math.hypot(ball.vx,ball.vy)<1.4){
     if(++laneStuck>36){
       laneStuck=0; ball.vx=0; ball.vy=-25;
       blip(140,0.2,'square',0.07,560); kick(4);
-      pop(LANE_X,820,'KICK!');
+      pop(LANE_X,900,'KICK!');
     }
   } else laneStuck=0;
 
-  if(ball.y>H+20 || (ball.y>905 && ball.x<LANE_L-4)) loseBall();
+  if(ball.y>H+20 || (ball.y>985 && ball.x<LANE_L-4)) loseBall();
 }
 
 /* ---------------- drawing ---------------- */
@@ -785,8 +798,8 @@ function draw(){
 
   ctx.fillStyle='#1b3d24';
   ctx.beginPath();
-  ctx.moveTo(EXIT_L,EY); ctx.lineTo(EXIT_L,470); ctx.lineTo(380,800);
-  ctx.lineTo(564,800); ctx.lineTo(LANE_L,470); ctx.lineTo(LANE_L,EY);
+  ctx.moveTo(EXIT_L,EY); ctx.lineTo(EXIT_L,500); ctx.lineTo(380,880);
+  ctx.lineTo(564,880); ctx.lineTo(LANE_L,500); ctx.lineTo(LANE_L,EY);
   ctx.ellipse(EX,EY,RX_I,RY_I,0,0,Math.PI,true);
   ctx.fill();
 
@@ -854,10 +867,10 @@ function draw(){
   // habitrail chutes
   for(let k=0;k<2;k++){
     const h=HR[k], lit=h.glow>0;
-    const ox0=(k===0?EXIT_L:LANE_L), oy0=470;
-    const ox1=(k===0?380:564),      oy1=800;
-    const ix0=(k===0?62:882),  iy0=437;
-    const ix1=(k===0?412:532), iy1=767;
+    const ox0=(k===0?EXIT_L:LANE_L), oy0=500;
+    const ox1=(k===0?380:564),      oy1=880;
+    const ix0=(k===0?64:880),  iy0=469;
+    const ix1=(k===0?414:530), iy1=849;
     ctx.beginPath();
     ctx.moveTo(ox0,iy0); ctx.lineTo(ox0,oy0); ctx.lineTo(ox1,oy1);
     ctx.lineTo(ix1,iy1); ctx.lineTo(ix0,iy0); ctx.closePath();
@@ -924,13 +937,13 @@ function draw(){
   if(!launched && !over){
     ctx.strokeStyle='#c9a227'; ctx.lineWidth=12; ctx.lineCap='butt';
     ctx.beginPath(); ctx.moveTo(LANE_X,ball.y+10); ctx.lineTo(LANE_X,H); ctx.stroke();
-    ctx.fillStyle='#0d1b12'; ctx.fillRect(974,740,14,140);
-    const cg=ctx.createLinearGradient(0,880,0,740);
+    ctx.fillStyle='#0d1b12'; ctx.fillRect(974,820,14,140);
+    const cg=ctx.createLinearGradient(0,960,0,820);
     cg.addColorStop(0,'#ffe14a'); cg.addColorStop(0.28,'#ffc22e');
     cg.addColorStop(0.55,'#ff8b1e'); cg.addColorStop(0.8,'#ff5a1c'); cg.addColorStop(1,'#ff2a1e');
-    ctx.fillStyle=cg; ctx.fillRect(974,880-charge*140,14,charge*140);
-    for(let i=1;i<7;i++){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(974,740+i*20,14,1.5); }
-    ctx.strokeStyle='#6fae72'; ctx.lineWidth=1.5; ctx.strokeRect(974,740,14,140);
+    ctx.fillStyle=cg; ctx.fillRect(974,960-charge*140,14,charge*140);
+    for(let i=1;i<7;i++){ ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(974,820+i*20,14,1.5); }
+    ctx.strokeStyle='#6fae72'; ctx.lineWidth=1.5; ctx.strokeRect(974,820,14,140);
   }
 
   if(flash>0){ ctx.fillStyle='rgba(255,210,74,'+(flash/90)+')'; ctx.fillRect(-20,-20,W+40,H+40); }
@@ -982,7 +995,7 @@ function drawScoreScreen(){
     ctx.textAlign='center';
   }
   ctx.fillStyle='#8fbf7a'; ctx.font='bold 16px Verdana';
-  ctx.fillText('PRESS  R  TO PLAY AGAIN',W/2,800);
+  ctx.fillText('PRESS  R  TO PLAY AGAIN',W/2,880);
 }
 
 /* ---------------- backglass ---------------- */
@@ -1218,9 +1231,15 @@ function drawGlass(){
 }
 
 function fitCab(){
-  const f=document.getElementById('fit');
+  const f=document.getElementById('fit'), cab=f.firstElementChild;
+  cab.classList.remove('compact');
   f.style.transform='none';
-  const sc=Math.min(1,(window.innerHeight-28)/f.offsetHeight);
+  const fit=function(){
+    return Math.min(1,(window.innerHeight-18)/f.offsetHeight,
+                      (window.innerWidth-18)/f.offsetWidth);
+  };
+  let sc=fit();
+  if(sc<0.86){ cab.classList.add('compact'); sc=fit(); }
   f.style.transform='scale('+sc+')';
 }
 addEventListener('resize',fitCab);
@@ -1252,7 +1271,7 @@ clearBtn.addEventListener('click',function(){
   },1400);
 });
 
-function loop(){ step(); draw(); drawGlass(); requestAnimationFrame(loop); }
+function loop(){ step(); draw(); if(gl.offsetParent) drawGlass(); requestAnimationFrame(loop); }
 msgEl.textContent=HINT;
 paintLetters();
 fitCab();
