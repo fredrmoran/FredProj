@@ -165,7 +165,7 @@ const RAIL_OUT=chain(EX,EY,RX_O,RY_O,Math.PI,2*Math.PI,130);
 const HEADSEGS=chain(HEAD.cx,HEAD.cy,HEAD.rx,HEAD.ry,0,2*Math.PI,64,72,108);
 
 let scoop=0, ejectRail=false, flash=0, shake=0, jawT=0, carCool=0, clickCool=0, laneStuck=0;
-let railPhase=0, railGlow=0, doorOpen=0, stuckT=0;
+let railPhase=0, railGlow=0, doorOpen=0, stuckT=0, pinX=0, pinY=0, pinT=0;
 
 const ball={x:LANE_X,y:790,vx:0,vy:0,r:BR,inLane:true};
 const trail=[];
@@ -173,8 +173,10 @@ let charge=0, charging=false, launched=false;
 
 const flL ={px:380,py:880,len:80,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
 const flR ={px:564,py:880,len:80,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
-const flL2={px:160,py:560,len:58,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
-const flR2={px:784,py:560,len:58,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
+// pivots sit just behind the habitrail wall - out in front of it the gap was
+// narrower than a ball, so one could wedge between the wall and the flipper base
+const flL2={px:148,py:571,len:58,rest:0.5,         up:-0.5,        a:0.5,         w:0, on:false};
+const flR2={px:796,py:571,len:58,rest:Math.PI-0.5, up:Math.PI+0.5, a:Math.PI-0.5, w:0, on:false};
 const FLIPPERS=[flL,flR,flL2,flR2];
 
 let carT=0; const carSpeed=0.011;
@@ -306,7 +308,7 @@ function award(n,x,y,label){
 function paintLetters(){ for(let i=0;i<NL;i++) dinoEls[i].className=lit[i]?'on':''; }
 function newBall(){
   ball.x=LANE_X; ball.y=FLOOR-BR-23; ball.vx=0; ball.vy=0; ball.inLane=true;
-  charge=0; charging=false; launched=false; scoop=0; ejectRail=false; laneStuck=0; stuckT=0; trail.length=0;
+  charge=0; charging=false; launched=false; scoop=0; ejectRail=false; laneStuck=0; stuckT=0; pinT=0; trail.length=0;
   mult=1; multEl.textContent=1; multEl.className='';
 }
 function gameOver(){
@@ -554,9 +556,13 @@ function step(){
     }
   }
 
-  if(Math.hypot(ball.vx,ball.vy)<1.1 && ball.y<840 && ball.x<LANE_L-4){
-    if(++stuckT>100){
-      stuckT=0; ball.vx=(Math.random()-0.5)*7; ball.vy=4.5;
+  // stuck = barely moving, OR rattling in one spot (e.g. against a fling egg)
+  const moved=(ball.x-pinX)*(ball.x-pinX)+(ball.y-pinY)*(ball.y-pinY)>58*58;
+  if(moved || flL.on||flR.on||flL2.on||flR2.on){ pinX=ball.x; pinY=ball.y; pinT=0; } else pinT++;
+  if((Math.hypot(ball.vx,ball.vy)<1.1 || pinT>230) && ball.y<840 && ball.x<LANE_L-4){
+    if(++stuckT>100 || pinT>230){
+      stuckT=0; pinT=0; pinX=ball.x; pinY=ball.y;
+      ball.vx=(Math.random()-0.5)*7; ball.vy=4.5;
       pop(ball.x,ball.y-24,'NUDGE','#bcd8e8'); kick(3);
       blip(200,0.1,'triangle',0.05);
     }
